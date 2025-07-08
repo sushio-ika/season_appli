@@ -94,17 +94,40 @@ namespace _0H04037_正田陸_uiux01
                 }
                 return;
             }
-
+            else if (!account.dontusechar(login_name) || !account.dontusechar(login_password) || account.dontJapanese(login_name) || account.dontJapanese(login_password))
+            {
+                if (Title.language == 0)
+                {
+                    label4.Text = "ユーザ名・パスワードに使用できない\n文字が含まれています";
+                }
+                else
+                {
+                    label4.Text = "User name or password\ncontains invalid characters";
+                }
+                return;
+            }
+            else if(account.zenkaku(login_name) || account.zenkaku(login_password))
+            {
+                if (Title.language == 0)
+                {
+                    label4.Text = "半角文字で入力してください";
+                }
+                else
+                {
+                    label4.Text = "Please use half-width characters";
+                }
+                return;
+            }
 
             //user_data.txtを読み取りで開く
             using (StreamReader rw = new StreamReader("user_data.txt", Encoding.GetEncoding("UTF-8")))
-            {
-                //ファイルの行数をカウント
-                while ((user_data = rw.ReadLine()) != null)
                 {
-                    linecount++;
+                    //ファイルの行数をカウント
+                    while ((user_data = rw.ReadLine()) != null)
+                    {
+                        linecount++;
+                    }
                 }
-            }
 
             if (linecount > 0) //ファイルにデータがある場合
             {

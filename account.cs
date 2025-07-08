@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -31,6 +32,23 @@ namespace _0H04037_正田陸_uiux01
             InitializeComponent();
             this.Size = new Size(1920, 1080);
             this.Shown += account_Shown; // ここでイベント登録
+        }
+
+        public static bool dontusechar(string input)
+        {
+            // 禁止文字リスト
+            char[] invalidChars = { ':', '\r', '\n' };
+            return !input.Any(c => invalidChars.Contains(c));
+        }
+        public static bool dontJapanese(string input)
+        {
+            // ひらがな・カタカナ・漢字・全角記号などを含む場合 true
+            return Regex.IsMatch(input, @"[\p{IsHiragana}\p{IsKatakana}\p{IsCJKUnifiedIdeographs}]");
+        }
+        public static bool zenkaku(string input)
+        {
+            // 全角文字（Unicode: U+FF01～U+FF60, U+FFE0～U+FFEE など）を含むか判定
+            return input.Any(c => (c >= 0xFF01 && c <= 0xFF60) || (c >= 0xFFE0 && c <= 0xFFEE));
         }
 
         private void account_Shown(object sender, EventArgs e)
@@ -95,6 +113,7 @@ namespace _0H04037_正田陸_uiux01
             string new_password = textBox2.Text;//入力されたパスワード
             string user_data;
             int lineCount = 0;
+            int pass_len = new_password.Length; //パスワードの長さ
 
             //ユーザ名かパスワードが空欄の場合
             if (string.IsNullOrWhiteSpace(textBox1.Text) || string.IsNullOrWhiteSpace(textBox2.Text))
@@ -108,18 +127,53 @@ namespace _0H04037_正田陸_uiux01
                     label4.Text = "Please enter a user name and password";
                 }
                 return;
-            }
-
+            } //空白になっていないかチェック
+            else if (!dontusechar(new_name) || !dontusechar(new_password) || dontJapanese(new_name) || dontJapanese(new_password))
+            {
+                if (Title.language == 0)
+                {
+                    label4.Text = "ユーザ名・パスワードに使用できない\n文字が含まれています";
+                }
+                else
+                {
+                    label4.Text = "User name or password\ncontains invalid characters";
+                }
+                return;
+            } //禁止文字または日本語チェック
+            else if (pass_len < 6 || pass_len > 16) // パスワードの長さチェック
+            {
+                if (Title.language == 0)
+                {
+                    label4.Text = "パスワードは8文字以上16文字以下で\n入力してください";
+                }
+                else
+                {
+                    label4.Text = "Password must be between\n8 and 16 characters";
+                }
+                return;
+            } //パスワード文字数チェック
+            else if (zenkaku(new_name) || zenkaku(new_password)) // 全角文字チェック
+            {
+                if (Title.language == 0)
+                {
+                    label4.Text = "半角文字で入力してください";
+                }
+                else
+                {
+                    label4.Text = "Please use half-width characters";
+                }
+                return;
+            } //全角文字チェック
 
             //user_data.txtを読み取りで開く
             using (StreamReader rw = new StreamReader("user_data.txt", Encoding.GetEncoding("UTF-8")))
-            {
-                //ファイルの行数をカウント
-                while ((user_data = rw.ReadLine()) != null)
                 {
-                    lineCount++;
+                    //ファイルの行数をカウント
+                    while ((user_data = rw.ReadLine()) != null)
+                    {
+                        lineCount++;
+                    }
                 }
-            }
 
 
             //ファイルにデータがある場合
